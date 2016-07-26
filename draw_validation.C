@@ -28,6 +28,19 @@ void draw_validation(){
   c_sum_lumi->SaveAs(plotpath+"sum_lumi.png");
   c_sum_lumi->Close();
   
+  //==== number of events
+  TCanvas *c_n_events_perLumiBlock = new TCanvas("c_n_events_perLumiBlock", "", 800, 600);
+  canvas_margin(c_n_events_perLumiBlock);
+  c_n_events_perLumiBlock->cd();
+  TH1F *hist_n_events_perLumiBlock = (TH1F*)file->Get("3muon_perLumiBlock")->Clone();
+  hist_n_events_perLumiBlock->Draw("ltext0");
+  set_bin_label(hist_n_events_perLumiBlock->GetXaxis(), lumi_bin_name);
+  hist_n_events_perLumiBlock->GetYaxis()->SetRangeUser(0, 250);
+  hist_n_events_perLumiBlock->SetTitle("# of events");
+  hist_n_events_perLumiBlock->SetYTitle("# of events");
+  c_n_events_perLumiBlock->SaveAs(plotpath+"n_events.png");
+  c_n_events_perLumiBlock->Close();
+  
   //==== (2muons/3muons)
   TCanvas *c_2mu_over_3mu = new TCanvas("c_2mu_over_3mu", "", 800, 600);
   canvas_margin(c_2mu_over_3mu);
@@ -43,96 +56,64 @@ void draw_validation(){
   c_2mu_over_3mu->SaveAs(plotpath+"2mu_over_3mu.png");
   c_2mu_over_3mu->Close();
   
-  //==== number of events
-  TCanvas *c_n_events_perLumiBlock = new TCanvas("c_n_events_perLumiBlock", "", 800, 600);
-  canvas_margin(c_n_events_perLumiBlock);
-  c_n_events_perLumiBlock->cd();
-  TH1F *hist_n_events_perLumiBlock = (TH1F*)file->Get("n_events_perLumiBlock")->Clone();
-  hist_n_events_perLumiBlock->Draw("ltext0");
-  set_bin_label(hist_n_events_perLumiBlock->GetXaxis(), lumi_bin_name);
-  hist_n_events_perLumiBlock->GetYaxis()->SetRangeUser(0, 250);
-  hist_n_events_perLumiBlock->SetTitle("# of events");
-  hist_n_events_perLumiBlock->SetYTitle("# of events");
-  c_n_events_perLumiBlock->SaveAs(plotpath+"n_events.png");
-  c_n_events_perLumiBlock->Close();
-  
   //==== (number of events) / (sum lumi) = cross section
   TCanvas *c_xsec = new TCanvas("c_xsec", "", 800, 600);
   canvas_margin(c_xsec);
   c_xsec->cd();
-  TH1F *hist_xsec = (TH1F*)file->Get("n_events_perLumiBlock");
+  TH1F *hist_xsec = (TH1F*)file->Get("3muon_perLumiBlock");
   hist_xsec->Divide(hist_sum_lumi);
   hist_xsec->Draw("ltext0");
   hist_xsec->SetMinimum(0);
+  hist_xsec->SetTitle("Effective Cross Section");
+  hist_xsec->SetYTitle("xsec [pb]");
   set_bin_label(hist_xsec->GetXaxis(), lumi_bin_name);
   c_xsec->SaveAs(plotpath+"xsec.png");
   c_xsec->Close();
   
-  //==== varialbes per lumi
-  vector<TString> variables_perlumi = {"PFMET", "n_jets", "first_Pt", "second_Pt", "third_Pt"};
-  vector<TString> hist_titles_perlumi = {"Mean of PFMET", "Mean of (# of jets)", "First Muon p_{T}", "Second Muon p_{T}", "Third Muon p_{T}"};
-  vector<TString> y_titles_perlumi = {"<MET> [GeV]", "<# of jets>", "<p_{T}> [GeV]", "<p_{T}> [GeV]", "<p_{T}> [GeV]"};
-  vector<double> y_maxs_perlumi = {50, 2, 100, 50, 50};
-
-  //==== we save sum all muon pT here
-  TCanvas *c_sumallmuonpt = new TCanvas("c_sumallmuonpt", "", 800, 600);
-  canvas_margin(c_sumallmuonpt);
-  c_sumallmuonpt->cd();
-  TH1F *hist_sumallmuonpt = (TH1F *)file->Get("first_Pt_perLumiBlock")->Clone();
-  hist_sumallmuonpt->Add( (TH1F *)file->Get("second_Pt_perLumiBlock") );
-  hist_sumallmuonpt->Add( (TH1F *)file->Get("third_Pt_perLumiBlock") );
-  hist_sumallmuonpt->Divide(hist_n_events_perLumiBlock);
-  set_bin_label(hist_sumallmuonpt->GetXaxis(), lumi_bin_name);
-  hist_sumallmuonpt->GetYaxis()->SetRangeUser(0, 150);
-  hist_sumallmuonpt->Draw("ltext0");
-  hist_sumallmuonpt->SetTitle("Sum of three muons p_{T}");
-  hist_sumallmuonpt->SetYTitle("p_{T} [GeV]");
-  c_sumallmuonpt->SaveAs(plotpath+"sumallmuonpt.png");
-  cout << "first   bin = " << hist_sumallmuonpt->GetBinContent(1) << endl;
-  cout << "      error = " << hist_sumallmuonpt->GetBinError(1) << endl;
-  c_sumallmuonpt->Close();
- 
-  for(unsigned int i=0; i<variables_perlumi.size(); i++){
-    TString this_variable = variables_perlumi.at(i);
-    TCanvas *c1 = new TCanvas("c1", "", 800, 600);
-    canvas_margin(c1);
-    c1->cd();
-    TH1F *hist1 = (TH1F *)file->Get(this_variable+"_perLumiBlock");
-    hist1->Divide(hist_n_events_perLumiBlock);
-    hist1->Draw("ltext0");
-    //draw_hist_marker(hist_MeanMET);
-    
-    hist1->SetTitle(hist_titles_perlumi.at(i));
-    set_bin_label(hist1->GetXaxis(), lumi_bin_name);
-    hist1->GetYaxis()->SetRangeUser(0, y_maxs_perlumi.at(i));
-    hist1->SetYTitle(y_titles_perlumi.at(i));
-    c1->SaveAs(plotpath+this_variable+"_perLumiBlock.png");
-    c1->Close();
-    
-  }
-
   //==== variables
-  vector<TString> variables = {"first_Pt", "second_Pt", "third_Pt"};
-  vector<TString> hist_titles = {"First Muon p_{T}", "Second Muon p_{T}", "Third Muon p_{T}"};
-  vector<TString> y_titles = {"<p_{T}> [GeV]", "<p_{T}> [GeV]", "<p_{T}> [GeV]"};
-  vector<double> y_maxs = {50, 100, 100};
-
+  vector<TString> variables = {"PFMET", "n_jets", "first_Pt", "second_Pt", "third_Pt", "MuonSumPt"};
+  vector<TString> hist_titles = {"PFMET", "# of jets", "First Muon p_{T}", "Second Muon p_{T}", "Third Muon p_{T}", "Sum of three muons' p_{T}"};
+  vector<TString> y_titles = {"<MET> [GeV]", "<# of jets>", "<p_{T}> [GeV]", "<p_{T}> [GeV]", "<p_{T}> [GeV]", "<p_{T}> [GeV]"};
+  vector<double> y_maxs_for_distrib = {20, 120, 20, 20, 20, 20};
+  vector<double> y_maxs_for_mean = {100, 2, 100, 100, 100, 150};
+  
   for(unsigned int i=0; i<variables.size(); i++){
-    TString this_variable = variables.at(i);
-    TCanvas *c1 = new TCanvas("c1", "", 800, 600);
-    canvas_margin(c1);
-    c1->cd();
-    TH1F *hist1 = (TH1F *)file->Get(this_variable);
-    hist1->Draw("hist");
 
-    hist1->SetTitle(hist_titles.at(i));
-    hist1->GetYaxis()->SetRangeUser(0, y_maxs.at(i));
-    hist1->SetYTitle(y_titles.at(i));
-    c1->SaveAs(plotpath+this_variable+".png");
-    c1->Close();
-
+    TH1F *hist_mean = new TH1F("hist_mean", "Mean of "+hist_titles.at(i), 3, 0., 3);
+    set_bin_label(hist_mean->GetXaxis(), lumi_bin_name);
+    //=== each lumi block
+    for(int j=0; j<3; j++){
+      TString this_variable = variables.at(i)+"_LumiBlock_"+TString::Itoa(j,10);
+      TCanvas *c1 = new TCanvas("c1", "", 800, 600);
+      canvas_margin(c1);
+      c1->cd();
+      TH1F *hist1 = (TH1F *)file->Get(this_variable);
+      hist1->Draw("hist");
+      hist1->SetTitle(hist_titles.at(i)+" @ LumiBlock "+TString::Itoa(j, 10));
+      hist1->GetYaxis()->SetRangeUser(0, y_maxs_for_distrib.at(i));
+      hist1->SetYTitle(y_titles.at(i));
+      c1->SaveAs(plotpath+this_variable+".png");
+      hist_mean->SetBinContent(j+1, hist1->GetMean());
+      hist_mean->SetBinError(j+1, hist1->GetMeanError());
+      c1->Close();
+      delete hist1;
+    }
+    //==== mean
+    TCanvas *c_mean = new TCanvas("c_mean", "", 800, 600);
+    canvas_margin(c_mean);
+    c_mean->cd();
+    hist_mean->Draw("ltext0");
+    hist_mean->SetYTitle(y_titles.at(i));
+    hist_mean->GetYaxis()->SetRangeUser(0, y_maxs_for_mean.at(i));
+    c_mean->SaveAs(plotpath+variables.at(i)+"_mean.png");
+    c_mean->Close();
+    delete hist_mean;
+    
   }
-
+  
+  
+  
+  
 }
 
 void set_bin_label(TAxis *axis, TString *labels){
